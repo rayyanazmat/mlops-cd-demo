@@ -48,3 +48,10 @@ jobs:
       - name: Show version
         run: |
           echo "Building version ${{ steps.version.outputs.version }}"
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
