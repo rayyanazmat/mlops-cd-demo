@@ -60,9 +60,10 @@ jobs:
         run: |
           docker build \
             -t ghcr.io/${{ github.repository }}:${{ steps.version.outputs.version }} \
+            -t ghcr.io/${{ github.repository }}:latest \
             .
 
-      - name: Push Docker image
+      - name: Push Docker images
         run: |
-          docker push \
-            ghcr.io/${{ github.repository }}:${{ steps.version.outputs.version }}
+          docker push ghcr.io/${{ github.repository }}:${{ steps.version.outputs.version }}
+          docker push ghcr.io/${{ github.repository }}:latest
