@@ -1,26 +1,42 @@
-# MLOps Continuous Delivery Tutorial
+# Student ML API — MLOps Assignment
 
-**Hands-on tutorial**: Continuous Delivery (CD) for an ML Application  
-**Stack**: GitHub Actions • Docker • GHCR • Staging • Approval Gates • Rollback
+The repository implements a small Flask prediction API and an assignment workflow based on feature branches, pull requests, CI, and tag-triggered Docker releases.
 
 ---
 
 ## Overview
 
-This project implements a complete **Continuous Delivery** pipeline for a simple ML inference API.  
-The pipeline follows the principle of **build once, deploy many** using immutable Docker artifacts.
+## Current workflow
+
+- `.github/workflows/ci.yml` runs tests and validates a Docker build on pull requests to `main`. It does not publish images.
+- `.github/workflows/release.yml` runs tests and publishes versioned, `latest`, and commit-specific images to GHCR when a semantic-version tag (such as `v1.0.0`) is pushed.
+- The Docker image includes OCI version, source, revision, and build-date labels.
+
+The detailed tutorial below describes the earlier CD prototype and is retained as background reference; the two workflows above define the current pipeline.
+
+## Local development
+
+```bash
+python -m pip install -r requirements.txt
+python -m pytest -q
+docker build -t student-ml-api:1.0.0 .
+docker run --rm -p 5000:5000 student-ml-api:1.0.0
+curl http://localhost:5000/health
+```
+
+Create changes on a feature branch and open a pull request to `main`. Configure `main` branch protection in GitHub to require a pull request and the `validate` status check. A squash merge keeps the assignment's feature changes easy to review as one commit.
+
+After merging a release, create and push its semantic-version tag (for example, `v1.0.0`). The release workflow derives the image version from that tag and publishes `ghcr.io/<owner>/student-ml-api` with versioned, `latest`, and short-commit tags. Pull a specific version to run or roll back without rebuilding it.
 
 ### What this repository demonstrates
 
 | Concept                        | Implementation                                      |
 |--------------------------------|-----------------------------------------------------|
-| Continuous Integration         | `pytest` runs on every relevant trigger             |
-| Continuous Delivery            | Semantic version tags trigger packaging + deployment|
-| Immutable artifacts            | Docker image built once and promoted                |
+| Continuous Integration         | `pytest` and Docker build check on pull requests     |
+| Release publishing             | Semantic version tags trigger image publishing       |
 | Container Registry             | GitHub Container Registry (GHCR)                    |
-| Staging environment            | Automatic deployment + smoke test                   |
-| Production gate                | Manual approval required                            |
-| Rollback                       | Redeploy a previous versioned image                 |
+| Artifact traceability           | Version, commit, source, and date labels and tags    |
+| Rollback                        | Pull and run a previously published version         |
 
 ---
 
@@ -36,7 +52,8 @@ mlops-cd-demo/
 │   └── test_app.py             # Unit tests
 └── .github/
     └── workflows/
-        └── cd.yml              # Continuous Delivery workflow
+        ├── ci.yml               # Pull-request validation
+        └── release.yml          # Tag-triggered image publishing
 ```
 
 ---
